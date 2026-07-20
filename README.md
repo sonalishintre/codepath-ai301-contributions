@@ -79,4 +79,29 @@ Implements sink_parquet, sink_csv, sink_ipc, and sink_ndjson. Closes #791.
 - [x] Follows project style guide
 - [x] No breaking changes
 
-**Status:** Awaiting review
+### Maintainer Feedback
+
+**Round 1 - @jernejfrank (July 2026)**
+
+Feedback received:
+1. Rename classes to match existing naming convention
+2. Add kwargs support for all 4 sink methods
+
+Changes made:
+- Renamed PolarsLazyFrameSinkParquet → PolarsSinkParquetWriter
+- Renamed PolarsLazyFrameSinkCSV → PolarsSinkCSVWriter
+- Renamed PolarsLazyFrameSinkIPC → PolarsSinkFeatherWriter
+- Renamed PolarsLazyFrameSinkNDJSON → PolarsSinkNDJSONWriter
+- Added _get_saving_kwargs() method to all 4 classes
+- All 4 tests still passing after changes
+
+Commit: refactor: rename sink classes and add kwargs support per reviewer feedback
+
+**Status:** Awaiting second review
+
+## Learnings & Reflections
+- Learned how real open source contribution works end to end
+- Maintainer feedback is normal and expected — not a failure
+- Setting up the dev environment was the hardest part
+- Following existing code patterns is key to getting PRs accepted
+- Responding quickly to feedback increases chances of getting merged
