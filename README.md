@@ -207,3 +207,31 @@ Changes made in response:
 The fastest way to contribute to a plugin-based project is to find the
 most similar existing plugin, open it side by side, and mirror it exactly.
 Don't guess the conventions — they're already in the codebase.
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+**Round 2 - @jernejfrank (July 2026)**
+
+Feedback received:
+1. Fix PolarsSinkFeatherWriter.name() — was returning "ipc" not "feather"
+2. Fix ambiguous LazyFrame saver selection
+3. Add missing kwargs (include_header for CSV)
+4. Add custom kwargs tests and adapter name tests
+5. Delete commented out old code
+6. Reorder classes to mirror existing module
+7. Fix formatting with ruff
+
+Changes made:
+- Fixed name() to return "feather"
+- Reordered classes: CSV, Parquet, Feather, NDJSON (reader+writer together)
+- Added include_header to PolarsSinkCSVWriter
+- Added 8 new tests (custom kwargs + adapter name tests)
+- Deleted all commented out code
+- Fixed all ruff formatting issues
+- 18/20 tests pass (2 failures are pre-existing environment issues 
+  requiring pyarrow and xlsxwriter — not related to this PR)
+
+Commit: `fix: address reviewer feedback - feather name, kwargs, ordering, formatting` — fec921a2
+
+**Status:** Awaiting third review
