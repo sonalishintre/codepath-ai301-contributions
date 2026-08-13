@@ -234,4 +234,21 @@ Changes made:
 
 Commit: `fix: address reviewer feedback - feather name, kwargs, ordering, formatting` — fec921a2
 
-**Status:** Awaiting third review
+**Status:** Round 3 feedback addressed — see below
+-------------------------------------------------------------------------------------------------------------------------
+
+**Round 3 - @jernejfrank (July 2026)**
+
+Maintainer opened a helpful PR on my fork (sonalishintre#1) 
+showing exactly what changes were needed.
+
+Changes made:
+- Merged maintainer's suggested PR into my branch
+- Fixed SchemaDefinition import error in polars_pre_1_0_0_extension.py
+  caused by newer polars versions deprecating type_aliases
+
+Result: 27/29 tests passing locally
+
+Commit: fix: fix SchemaDefinition import error in polars_pre_1_0_0_extension — a9ef8047
+
+**Status:** Awaiting final review
