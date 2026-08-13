@@ -26,29 +26,29 @@ to convert to a DataFrame before saving, which loses the performance
 benefits of streaming. The fix is to add DataSaver subclasses that call
 Polars' native sink_* methods directly on the LazyFrame.
 
-## Stretch / Bonus
+### Stretch / Bonus
 
-### Specific Files Involved
+**Specific Files Involved:**
 - **File to modify:** `hamilton/plugins/polars_lazyframe_extensions.py`
-  - Missing: `PolarsSinkCSVWriter`, `PolarsSinkParquetWriter`, 
+  - Missing: `PolarsSinkCSVWriter`, `PolarsSinkParquetWriter`,
     `PolarsSinkFeatherWriter`, `PolarsSinkNDJSONWriter` classes
   - Missing: Registration of new classes in `register_data_loaders()`
 - **Reference file:** `hamilton/plugins/polars_post_1_0_0_extensions.py`
   - Contains existing `DataSaver` pattern to follow
 
-### Related Issues & Maintainer Comments
+**Related Issues & Maintainer Comments:**
 - Original issue: https://github.com/apache/hamilton/issues/791
 - My PR: https://github.com/apache/hamilton/pull/1653
 - Maintainer review: https://github.com/apache/hamilton/pull/1653#issuecomment-5062901709
 
-### Acceptance Criteria (What "Fixed" Looks Like)
-- [ ] `PolarsSinkParquetWriter` class exists and calls `lf.sink_parquet()`
-- [ ] `PolarsSinkCSVWriter` class exists and calls `lf.sink_csv()`
-- [ ] `PolarsSinkFeatherWriter` class exists and calls `lf.sink_ipc()`
-- [ ] `PolarsSinkNDJSONWriter` class exists and calls `lf.sink_ndjson()`
-- [ ] All 4 classes registered in `register_data_loaders()`
-- [ ] All 4 classes have `_get_saving_kwargs()` with full kwargs support
-- [ ] Tests pass confirming LazyFrames written correctly without collect()
+**Acceptance Criteria (What "Fixed" Looks Like):**
+- [x] `PolarsSinkParquetWriter` class exists and calls `lf.sink_parquet()`
+- [x] `PolarsSinkCSVWriter` class exists and calls `lf.sink_csv()`
+- [x] `PolarsSinkFeatherWriter` class exists and calls `lf.sink_ipc()`
+- [x] `PolarsSinkNDJSONWriter` class exists and calls `lf.sink_ndjson()`
+- [x] All 4 classes registered in `register_data_loaders()`
+- [x] All 4 classes have `_get_saving_kwargs()` with full kwargs support
+- [x] Tests pass confirming LazyFrames written correctly without collect()
 - [ ] PR merged into apache/hamilton main branch
 
 ---
@@ -125,45 +125,50 @@ file, read it back, and assert data matches using `assert_frame_equal`.
 **Files modified:**
 - `hamilton/plugins/polars_lazyframe_extensions.py`
 - `tests/plugins/test_polars_lazyframe_extensions.py`
+- `hamilton/plugins/polars_pre_1_0_0_extension.py`
 
 **What I built:**
 - Added `DataSaver` to imports
 - Added 4 DataSaver subclasses with `_get_saving_kwargs()` for all kwargs
 - Registered all 4 new sinks in `register_data_loaders()`
-- Added 4 tests following existing test patterns in the project
+- Added 12 tests following existing test patterns in the project
 
 **Key commits:**
 - `feat: add LazyFrame sink classes for parquet, csv, ipc, ndjson` — d8e3e28
 - `test: add tests for LazyFrame sink classes` — dbb400c
 - `refactor: rename sink classes and add kwargs support per reviewer feedback` — 4ed01ea8
+- `fix: address reviewer feedback - feather name, kwargs, ordering, formatting` — fec921a2
+- `fix: fix SchemaDefinition import error in polars_pre_1_0_0_extension` — a9ef8047
 
 ### Challenges Faced
 - **Python version:** Had Python 3.7, Hamilton requires 3.8+.
-  Fixed by installing Python 3.13 and creating a new venv with `py -3.13 -m venv venv`
+  Fixed by installing Python 3.13 and creating a new venv
 - **metadata["path"] KeyError:** Tests asserted `metadata["path"]` but
   `utils.get_file_metadata()` returns a nested dict.
-  Fixed by removing that assertion and only checking `file.exists()`
-- **sink_csv has_header error:** Added `has_header` kwarg to
-  `PolarsSinkCSVWriter` but `LazyFrame.sink_csv()` doesn't accept it
-  (it's a read-only parameter). Fixed by removing it from the class.
+  Fixed by removing that assertion
+- **sink_csv has_header error:** `LazyFrame.sink_csv()` doesn't accept
+  `has_header` — it's a read parameter. Fixed by removing it.
+- **SchemaDefinition error:** Newer polars deprecated `type_aliases` module.
+  Fixed by adding `SchemaDefinition = type` as fallback
 
 ### Testing Strategy
 **Automated tests added** in `tests/plugins/test_polars_lazyframe_extensions.py`:
-- `test_polars_lazyframe_sink_parquet` ✅ — sinks LazyFrame to parquet,
-  reads back with `pl.read_parquet()`, asserts data matches, checks kwargs
-- `test_polars_lazyframe_sink_csv` ✅ — sinks to CSV, reads back with
-  `pl.read_csv()`, asserts data matches, checks separator kwarg
-- `test_polars_lazyframe_sink_ipc` ✅ — sinks to IPC, reads back with
-  `pl.read_ipc()`, asserts data matches, checks compression kwarg
-- `test_polars_lazyframe_sink_ndjson` ✅ — sinks to NDJSON, reads back
-  with `pl.read_ndjson()`, asserts data matches, checks maintain_order kwarg
+- `test_polars_lazyframe_sink_parquet` ✅
+- `test_polars_lazyframe_sink_parquet_custom_kwargs` ✅
+- `test_polars_lazyframe_sink_csv` ✅
+- `test_polars_lazyframe_sink_csv_custom_kwargs` ✅
+- `test_polars_lazyframe_sink_ipc` ✅
+- `test_polars_lazyframe_sink_ipc_custom_kwargs` ✅
+- `test_polars_lazyframe_sink_ndjson` ✅
+- `test_polars_lazyframe_sink_ndjson_custom_kwargs` ✅
+- `test_polars_lazyframe_sink_feather_adapter_name` ✅
+- `test_polars_lazyframe_sink_csv_adapter_name` ✅
+- `test_polars_lazyframe_sink_parquet_adapter_name` ✅
+- `test_polars_lazyframe_sink_ndjson_adapter_name` ✅
 
-**Manual testing:** Imported classes directly in Python REPL and called
-`save_data()` on a small LazyFrame to verify files were created on disk.
+**Test run result:** 27/29 passing (2 pre-existing failures unrelated to this PR)
 
-**Test run result:**
 ![Tests Passing](https://github.com/user-attachments/assets/6c04e983-0cde-4ee6-97a2-550b07ef00a7)
-
 
 ---
 
@@ -183,7 +188,7 @@ Implements sink_parquet, sink_csv, sink_ipc, and sink_ndjson. Closes #791.
 - [x] Follows project style guide
 - [x] No breaking changes
 
-**Status:** Iterating on maintainer feedback
+**Status:** Awaiting final review
 
 ### Maintainer Feedback
 
@@ -191,50 +196,21 @@ Implements sink_parquet, sink_csv, sink_ipc, and sink_ndjson. Closes #791.
 
 Feedback received:
 1. Rename classes to match existing naming convention
-   (e.g. `PolarsSinkParquetWriter` not `PolarsLazyFrameSinkParquet`)
-2. Add kwargs support for all 4 sink methods to match existing implementations
+2. Add kwargs support for all 4 sink methods
 3. Mirror class ordering from `polars_post_1_0_0_extensions.py`
 
-Changes made in response:
+Changes made:
 - Renamed `PolarsLazyFrameSinkParquet` → `PolarsSinkParquetWriter`
 - Renamed `PolarsLazyFrameSinkCSV` → `PolarsSinkCSVWriter`
 - Renamed `PolarsLazyFrameSinkIPC` → `PolarsSinkFeatherWriter`
 - Renamed `PolarsLazyFrameSinkNDJSON` → `PolarsSinkNDJSONWriter`
-- Added `_get_saving_kwargs()` method to all 4 classes with full kwargs
-- Removed `has_header` from CSV writer (read-only parameter, not valid for sink)
-- Updated all test imports and assertions to match new class names
+- Added `_get_saving_kwargs()` method to all 4 classes
 
-**Commit:** `refactor: rename sink classes and add kwargs support per reviewer feedback` — 4ed01ea8
+Commit: `refactor: rename sink classes and add kwargs support per reviewer feedback` — 4ed01ea8
 
-**Reply posted:** July 2026 — tagged @jernejfrank confirming all changes made
+**Status:** Round 2 feedback addressed — see below
 
-**Status:** Awaiting second review
-
-### Learnings & Reflections
-
-**Technical gains:**
-- Learned how Hamilton's plugin/adapter system works — DataLoader vs
-  DataSaver, `applicable_types()`, `name()`, and `register_adapter()`
-- Learned the difference between Polars eager (DataFrame) and lazy
-  (LazyFrame) execution and why sink_* methods are more performant
-- Learned that `has_header` is a read parameter in Polars CSV, not a
-  write parameter — caught this through a failing test
-- Learned to read `_get_saving_kwargs()` patterns from existing code
-  rather than guessing what parameters to include
-
-**What I'd do differently:**
-- Read the reference file (`polars_post_1_0_0_extensions.py`) more
-  carefully before writing — the naming convention was already there
-- Set up the correct Python version from the start to avoid venv issues
-- Commit more frequently during implementation
-
-**Key insight for future contributors:**
-The fastest way to contribute to a plugin-based project is to find the
-most similar existing plugin, open it side by side, and mirror it exactly.
-Don't guess the conventions — they're already in the codebase.
-
-
----------------------------------------------------------------------------------------------------------------------------
+---
 
 **Round 2 - @jernejfrank (July 2026)**
 
@@ -254,26 +230,45 @@ Changes made:
 - Added 8 new tests (custom kwargs + adapter name tests)
 - Deleted all commented out code
 - Fixed all ruff formatting issues
-- 18/20 tests pass (2 failures are pre-existing environment issues 
-  requiring pyarrow and xlsxwriter — not related to this PR)
 
 Commit: `fix: address reviewer feedback - feather name, kwargs, ordering, formatting` — fec921a2
 
 **Status:** Round 3 feedback addressed — see below
--------------------------------------------------------------------------------------------------------------------------
+
+---
 
 **Round 3 - @jernejfrank (July 2026)**
 
-Maintainer opened a helpful PR on my fork (sonalishintre#1) 
+Maintainer opened a helpful PR directly on my fork (sonalishintre#1)
 showing exactly what changes were needed.
 
 Changes made:
 - Merged maintainer's suggested PR into my branch
 - Fixed SchemaDefinition import error in polars_pre_1_0_0_extension.py
-  caused by newer polars versions deprecating type_aliases
+- Maintainer added registry resolution tests and materializer tests
 
 Result: 27/29 tests passing locally
 
-Commit: fix: fix SchemaDefinition import error in polars_pre_1_0_0_extension — a9ef8047
+Commit: `fix: fix SchemaDefinition import error in polars_pre_1_0_0_extension` — a9ef8047
 
 **Status:** Awaiting final review
+
+### Learnings & Reflections
+
+**Technical gains:**
+- Learned how Hamilton's plugin/adapter system works — DataLoader vs
+  DataSaver, `applicable_types()`, `name()`, and `register_adapter()`
+- Learned the difference between Polars eager (DataFrame) and lazy
+  (LazyFrame) execution and why sink_* methods are more performant
+- Learned that `has_header` is a read parameter in Polars CSV, not a
+  write parameter — caught this through a failing test
+
+**What I'd do differently:**
+- Read the reference file more carefully before writing code
+- Set up the correct Python version from the start
+- Commit more frequently during implementation
+
+**Key insight for future contributors:**
+The fastest way to contribute to a plugin-based project is to find the
+most similar existing plugin, open it side by side, and mirror it exactly.
+Don't guess the conventions — they're already in the codebase.
