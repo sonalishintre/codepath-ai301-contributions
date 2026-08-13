@@ -170,6 +170,31 @@ file, read it back, and assert data matches using `assert_frame_equal`.
 
 ![Tests Passing](https://github.com/user-attachments/assets/6c04e983-0cde-4ee6-97a2-550b07ef00a7)
 
+### Engineering Judgment / Stretch
+
+**Edge case identified beyond maintainer requests:**
+During implementation I discovered that `LazyFrame.sink_csv()` does not 
+accept `has_header` as a parameter (it is a read-only parameter), even 
+though the existing `PolarsCSVWriter` for DataFrames exposes it. I caught 
+this through a failing test rather than documentation. I replaced it with 
+`include_header` which is the correct write-side parameter, and documented 
+why `lazy=True` is intentionally excluded from all sink writers — because 
+`save_data()` expects the file to exist immediately after the call returns.
+
+**Reused project-specific test helpers:**
+I studied the existing test file and reused `tmp_path`, `assert_frame_equal`, 
+and the `@pytest.fixture def df()` pattern exactly as used in neighboring 
+tests. I also followed the project's parametrized test pattern when the 
+maintainer added `test_lazyframe_sink_registry_resolution` — learning how 
+Hamilton's registry/materializer API should be tested through `resolve_adapter_class` 
+rather than direct class instantiation.
+
+**Identified registration ambiguity:**
+I independently identified that the existing eager CSV, Parquet, Feather 
+and NDJSON writers already advertise support for `pl.LazyFrame`, causing 
+ambiguous adapter selection. I documented this in my PR and worked with 
+the maintainer to resolve it through proper registration ordering.
+
 ---
 
 ## Phase IV - Submit & Iterate
