@@ -26,6 +26,31 @@ to convert to a DataFrame before saving, which loses the performance
 benefits of streaming. The fix is to add DataSaver subclasses that call
 Polars' native sink_* methods directly on the LazyFrame.
 
+## Stretch / Bonus
+
+### Specific Files Involved
+- **File to modify:** `hamilton/plugins/polars_lazyframe_extensions.py`
+  - Missing: `PolarsSinkCSVWriter`, `PolarsSinkParquetWriter`, 
+    `PolarsSinkFeatherWriter`, `PolarsSinkNDJSONWriter` classes
+  - Missing: Registration of new classes in `register_data_loaders()`
+- **Reference file:** `hamilton/plugins/polars_post_1_0_0_extensions.py`
+  - Contains existing `DataSaver` pattern to follow
+
+### Related Issues & Maintainer Comments
+- Original issue: https://github.com/apache/hamilton/issues/791
+- My PR: https://github.com/apache/hamilton/pull/1653
+- Maintainer review: https://github.com/apache/hamilton/pull/1653#issuecomment-5062901709
+
+### Acceptance Criteria (What "Fixed" Looks Like)
+- [ ] `PolarsSinkParquetWriter` class exists and calls `lf.sink_parquet()`
+- [ ] `PolarsSinkCSVWriter` class exists and calls `lf.sink_csv()`
+- [ ] `PolarsSinkFeatherWriter` class exists and calls `lf.sink_ipc()`
+- [ ] `PolarsSinkNDJSONWriter` class exists and calls `lf.sink_ndjson()`
+- [ ] All 4 classes registered in `register_data_loaders()`
+- [ ] All 4 classes have `_get_saving_kwargs()` with full kwargs support
+- [ ] Tests pass confirming LazyFrames written correctly without collect()
+- [ ] PR merged into apache/hamilton main branch
+
 ---
 
 ## Phase II - Reproduction & Plan
