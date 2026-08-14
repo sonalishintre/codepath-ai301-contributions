@@ -170,6 +170,14 @@ file, read it back, and assert data matches using `assert_frame_equal`.
 
 ![Tests Passing](https://github.com/user-attachments/assets/6c04e983-0cde-4ee6-97a2-550b07ef00a7)
 
+**Manual testing performed:**
+- Imported classes directly in Python REPL and called `save_data()`
+  on a small LazyFrame to verify files were created on disk
+- Verified file contents by reading back with `pl.read_parquet()`,
+  `pl.read_csv()`, `pl.read_ipc()`, `pl.read_ndjson()`
+- Confirmed `lf.collect()` was NOT called anywhere in the sink path
+- Run command: `pytest tests/plugins/test_polars_lazyframe_extensions.py -v`
+- 
 ### Engineering Judgment / Stretch
 
 **Edge case identified beyond maintainer requests:**
